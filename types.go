@@ -6,6 +6,13 @@ type NearbySearchRequest struct {
 	Radius   int
 	SortRule string
 	Limit    int
+	Filter   NearbySearchFilter
+}
+
+type NearbySearchFilter struct {
+	MinCost   float64
+	MaxCost   float64
+	MinRating float64
 }
 
 type NearbySearchResponse struct {

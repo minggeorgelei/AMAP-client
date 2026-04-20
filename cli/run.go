@@ -136,6 +136,11 @@ func (c *NearbyCmd) Run(app *App) error {
 		Radius:   c.Radius,
 		SortRule: c.SortRule,
 		Limit:    c.Limit,
+		Filter: amapclient.NearbySearchFilter{
+			MinCost:   c.MinCost,
+			MaxCost:   c.MaxCost,
+			MinRating: c.MinRating,
+		},
 	}
 	response, err := app.client.NearbySearch(context.Background(), req)
 	if err != nil {

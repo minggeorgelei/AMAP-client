@@ -19,9 +19,12 @@ type GlobalOptions struct {
 }
 
 type NearbyCmd struct {
-	Location string `help:"Center point as 'longitude,latitude'." required:""`
-	Keywords string `help:"Search keywords."`
-	Radius   int    `help:"Search radius in meters (0-50000)." default:"5000"`
-	SortRule string `help:"Sort rule: distance or weight." default:"distance" enum:"distance,weight"`
-	Limit    int    `help:"Number of POIs to return (max 20)."`
+	Location  string  `help:"Center point as 'longitude,latitude'." required:""`
+	Keywords  string  `help:"Search keywords."`
+	Radius    int     `help:"Search radius in meters (0-50000)." default:"5000"`
+	SortRule  string  `help:"Sort rule: distance or weight." default:"distance" enum:"distance,weight"`
+	Limit     int     `help:"Number of POIs to return (max 20)."`
+	MinCost   float64 `name:"min-cost" help:"Minimum per-person cost; excludes POIs without cost data."`
+	MaxCost   float64 `name:"max-cost" help:"Maximum per-person cost; excludes POIs without cost data."`
+	MinRating float64 `name:"min-rating" help:"Minimum rating 0-5; excludes POIs without rating data."`
 }

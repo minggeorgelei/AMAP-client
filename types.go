@@ -15,6 +15,14 @@ type NearbySearchFilter struct {
 	MinRating float64
 }
 
+type SearchRequest struct {
+	Keywords string
+	Types    string
+	Region   string
+	Limit    int
+	Filter   NearbySearchFilter
+}
+
 type NearbySearchResponse struct {
 	Status   string `json:"status,omitempty"`
 	Info     string `json:"info,omitempty"`

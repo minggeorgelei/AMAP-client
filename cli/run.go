@@ -146,14 +146,37 @@ func (c *NearbyCmd) Run(app *App) error {
 	if err != nil {
 		return err
 	}
-	if app.json {
+	return app.writePOIs(response)
+}
+
+func (c *SearchCmd) Run(app *App) error {
+	req := amapclient.SearchRequest{
+		Keywords: c.Keywords,
+		Types:    c.Types,
+		Region:   c.Region,
+		Limit:    c.Limit,
+		Filter: amapclient.NearbySearchFilter{
+			MinCost:   c.MinCost,
+			MaxCost:   c.MaxCost,
+			MinRating: c.MinRating,
+		},
+	}
+	response, err := app.client.Search(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	return app.writePOIs(response)
+}
+
+func (a *App) writePOIs(response amapclient.NearbySearchResponse) error {
+	if a.json {
 		encoded, err := json.MarshalIndent(response, "", "  ")
 		if err != nil {
 			return fmt.Errorf("encode json: %w", err)
 		}
-		_, _ = fmt.Fprintln(app.out, string(encoded))
+		_, _ = fmt.Fprintln(a.out, string(encoded))
 		return nil
 	}
-	_, _ = fmt.Fprint(app.out, renderNearby(app.color, response))
+	_, _ = fmt.Fprint(a.out, renderNearby(a.color, response))
 	return nil
 }

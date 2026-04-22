@@ -6,6 +6,7 @@ import "time"
 type Root struct {
 	Global GlobalOptions `embed:""`
 	Nearby NearbyCmd     `cmd:"" help:"Search nearby places by location."`
+	Search SearchCmd     `cmd:"" help:"Search places by keyword or type."`
 }
 
 type GlobalOptions struct {
@@ -23,6 +24,16 @@ type NearbyCmd struct {
 	Keywords  string  `help:"Search keywords."`
 	Radius    int     `help:"Search radius in meters (0-50000)." default:"5000"`
 	SortRule  string  `help:"Sort rule: distance or weight." default:"distance" enum:"distance,weight"`
+	Limit     int     `help:"Number of POIs to return (max 20)."`
+	MinCost   float64 `name:"min-cost" help:"Minimum per-person cost; excludes POIs without cost data."`
+	MaxCost   float64 `name:"max-cost" help:"Maximum per-person cost; excludes POIs without cost data."`
+	MinRating float64 `name:"min-rating" help:"Minimum rating 0-5; excludes POIs without rating data."`
+}
+
+type SearchCmd struct {
+	Keywords  string  `help:"Search keywords (required if --types is empty)."`
+	Types     string  `help:"POI type codes, pipe-separated (required if --keywords is empty)."`
+	Region    string  `help:"Region name, citycode, or adcode to bias search."`
 	Limit     int     `help:"Number of POIs to return (max 20)."`
 	MinCost   float64 `name:"min-cost" help:"Minimum per-person cost; excludes POIs without cost data."`
 	MaxCost   float64 `name:"max-cost" help:"Maximum per-person cost; excludes POIs without cost data."`

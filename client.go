@@ -18,7 +18,7 @@ type Client struct {
 }
 
 const (
-	DefaultBaseUrl = "https://restapi.amap.com/v5"
+	DefaultBaseUrl = "https://restapi.amap.com"
 	DefaultTimeout = 15 * time.Second
 )
 

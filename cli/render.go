@@ -79,6 +79,96 @@ func renderNearby(color Color, response amapclient.NearbySearchResponse) string 
 	return b.String()
 }
 
+func renderWeather(color Color, response amapclient.WeatherResponse) string {
+	if len(response.Lives) == 0 && len(response.Forecasts) == 0 {
+		return "No weather data.\n"
+	}
+
+	var b strings.Builder
+	for i, live := range response.Lives {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		header := strings.Join(nonEmpty(live.Province, live.City), " ")
+		if live.Adcode != "" {
+			header += " " + color.Dim("("+live.Adcode+")")
+		}
+		b.WriteString(color.Bold("Live  "))
+		b.WriteString(color.Cyan(header))
+		b.WriteString("\n")
+		if live.Weather != "" || live.Temperature != "" {
+			wx := live.Weather
+			if live.Temperature != "" {
+				if wx != "" {
+					wx += "  "
+				}
+				wx += color.Yellow(live.Temperature + "°C")
+			}
+			writeField(&b, color, "Cond   ", wx)
+		}
+		if live.Winddirection != "" || live.Windpower != "" {
+			writeField(&b, color, "Wind   ", strings.TrimSpace(live.Winddirection+"风 "+live.Windpower+"级"))
+		}
+		if live.Humidity != "" {
+			writeField(&b, color, "Humid  ", live.Humidity+"%")
+		}
+		if live.Reporttime != "" {
+			writeField(&b, color, "Report ", live.Reporttime)
+		}
+	}
+
+	for i, fc := range response.Forecasts {
+		if i > 0 || len(response.Lives) > 0 {
+			b.WriteString("\n")
+		}
+		header := strings.Join(nonEmpty(fc.Province, fc.City), " ")
+		if fc.Adcode != "" {
+			header += " " + color.Dim("("+fc.Adcode+")")
+		}
+		b.WriteString(color.Bold("Forecast  "))
+		b.WriteString(color.Cyan(header))
+		b.WriteString("\n")
+		if fc.Reporttime != "" {
+			writeField(&b, color, "Report ", fc.Reporttime)
+		}
+		for _, cast := range fc.Casts {
+			day := strings.TrimSpace(cast.Date + " (星期" + convertWeekDay(cast.Week) + ")")
+			b.WriteString("  ")
+			b.WriteString(color.Dim(day + ": "))
+			b.WriteString(fmt.Sprintf("%s %s°C / %s %s°C",
+				cast.Dayweather, cast.Daytemp, cast.Nightweather, cast.Nighttemp))
+			wind := strings.TrimSpace(cast.Daywind + "风 " + cast.Daypower + "级 / " + cast.Nightwind + "风 " + cast.Nightpower + "级")
+			if wind != "" {
+				b.WriteString("  ")
+				b.WriteString(color.Dim(wind))
+			}
+			b.WriteString("\n")
+		}
+	}
+	return b.String()
+}
+
+func convertWeekDay(week string) string {
+	switch week {
+	case "1":
+		return "一"
+	case "2":
+		return "二"
+	case "3":
+		return "三"
+	case "4":
+		return "四"
+	case "5":
+		return "五"
+	case "6":
+		return "六"
+	case "7":
+		return "日"
+	default:
+		return ""
+	}
+}
+
 func writeField(b *strings.Builder, color Color, label, value string) {
 	b.WriteString("  ")
 	b.WriteString(color.Dim(label + ": "))

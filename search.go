@@ -81,7 +81,7 @@ func (c *Client) fetchSearchPage(ctx context.Context, req SearchRequest, pageSiz
 	params.Set("show_fields", showFieldsNearbySearch)
 
 	var resp NearbySearchResponse
-	if err := c.Get(ctx, "/place/text", params, &resp); err != nil {
+	if err := c.Get(ctx, "/v5/place/text", params, &resp); err != nil {
 		return NearbySearchResponse{}, err
 	}
 	if resp.Status != "" && resp.Status != "1" {

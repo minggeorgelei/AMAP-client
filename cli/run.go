@@ -168,6 +168,31 @@ func (c *SearchCmd) Run(app *App) error {
 	return app.writePOIs(response)
 }
 
+func (c *WeatherCmd) Run(app *App) error {
+	req := amapclient.WeatherRequest{
+		City:       c.City,
+		Extensions: c.Extensions,
+	}
+	response, err := app.client.Weather(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	return app.writeWeather(response)
+}
+
+func (a *App) writeWeather(response amapclient.WeatherResponse) error {
+	if a.json {
+		encoded, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			return fmt.Errorf("encode json: %w", err)
+		}
+		_, _ = fmt.Fprintln(a.out, string(encoded))
+		return nil
+	}
+	_, _ = fmt.Fprint(a.out, renderWeather(a.color, response))
+	return nil
+}
+
 func (a *App) writePOIs(response amapclient.NearbySearchResponse) error {
 	if a.json {
 		encoded, err := json.MarshalIndent(response, "", "  ")

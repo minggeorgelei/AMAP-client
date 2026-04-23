@@ -60,3 +60,62 @@ type Business struct {
 	Cost         string `json:"cost,omitempty"`
 	ParkingType  string `json:"parking_type,omitempty"`
 }
+
+type WeatherRequest struct {
+	City       string
+	Extensions string
+}
+
+type WeatherResponse struct {
+	Status    string     `json:"status,omitempty"`
+	Count     string     `json:"count,omitempty"`
+	Info      string     `json:"info,omitempty"`
+	Infocode  string     `json:"infocode,omitempty"`
+	Lives     []Live     `json:"lives,omitempty"`
+	Forecasts []Forecast `json:"forecasts,omitempty"`
+}
+
+type Live struct {
+	Province      string `json:"province,omitempty"`
+	City          string `json:"city,omitempty"`
+	Adcode        string `json:"adcode,omitempty"`
+	Weather       string `json:"weather,omitempty"`
+	Temperature   string `json:"temperature,omitempty"`
+	Winddirection string `json:"winddirection,omitempty"`
+	Windpower     string `json:"windpower,omitempty"`
+	Humidity      string `json:"humidity,omitempty"`
+	Reporttime    string `json:"reporttime,omitempty"`
+}
+
+type Forecast struct {
+	City       string `json:"city,omitempty"`
+	Adcode     string `json:"adcode,omitempty"`
+	Province   string `json:"province,omitempty"`
+	Reporttime string `json:"reporttime,omitempty"`
+	Casts      []Cast `json:"casts,omitempty"`
+}
+
+type Cast struct {
+	Date         string `json:"date,omitempty"`
+	Week         string `json:"week,omitempty"`
+	Dayweather   string `json:"dayweather,omitempty"`
+	Nightweather string `json:"nightweather,omitempty"`
+	Daytemp      string `json:"daytemp,omitempty"`
+	Nighttemp    string `json:"nighttemp,omitempty"`
+	Daywind      string `json:"daywind,omitempty"`
+	Nightwind    string `json:"nightwind,omitempty"`
+	Daypower     string `json:"daypower,omitempty"`
+	Nightpower   string `json:"nightpower,omitempty"`
+}
+
+type geocodeResponse struct {
+	Status   string    `json:"status,omitempty"`
+	Info     string    `json:"info,omitempty"`
+	Infocode string    `json:"infocode,omitempty"`
+	Geocodes []geocode `json:"geocodes,omitempty"`
+}
+
+type geocode struct {
+	FormattedAddress string `json:"formatted_address,omitempty"`
+	Adcode           string `json:"adcode,omitempty"`
+}

@@ -5,13 +5,14 @@ import "time"
 // Root defines the CLI command tree.
 type Root struct {
 	Global GlobalOptions `embed:""`
-	Nearby NearbyCmd     `cmd:"" help:"Search nearby places by location."`
-	Search SearchCmd     `cmd:"" help:"Search places by keyword or type."`
+	Nearby  NearbyCmd  `cmd:"" help:"Search nearby places by location."`
+	Search  SearchCmd  `cmd:"" help:"Search places by keyword or type."`
+	Weather WeatherCmd `cmd:"" help:"Query live or forecast weather by city."`
 }
 
 type GlobalOptions struct {
 	Key     string        `help:"AMAP API key." env:"AMAP_API_KEY"`
-	BaseUrl string        `help:"Places API base URL." env:"AMAP_BASE_URL" default:"https://restapi.amap.com/v5"`
+	BaseUrl string        `help:"AMAP API base URL." env:"AMAP_BASE_URL" default:"https://restapi.amap.com"`
 	Timeout time.Duration `help:"HTTP timeout." default:"10s"`
 	JSON    bool          `help:"Output JSON."`
 	NoColor bool          `help:"Disable color output."`
@@ -38,4 +39,9 @@ type SearchCmd struct {
 	MinCost   float64 `name:"min-cost" help:"Minimum per-person cost; excludes POIs without cost data."`
 	MaxCost   float64 `name:"max-cost" help:"Maximum per-person cost; excludes POIs without cost data."`
 	MinRating float64 `name:"min-rating" help:"Minimum rating 0-5; excludes POIs without rating data."`
+}
+
+type WeatherCmd struct {
+	City       string `help:"City adcode (6 digits) or name; names are resolved via geocoding." required:""`
+	Extensions string `help:"Weather type: base (live) or all (forecast)." default:"base" enum:"base,all"`
 }

@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 
 	"github.com/alecthomas/kong"
 	amapclient "github.com/minggeorgelei/AMAP-client"
 )
+
+var coordPattern = regexp.MustCompile(`^-?\d+(\.\d+)?,-?\d+(\.\d+)?$`)
 
 type App struct {
 	client *amapclient.Client
@@ -130,8 +133,20 @@ func parseWithExit(parser *kong.Kong, args []string, exitCode *int) (ctx *kong.C
 }
 
 func (c *NearbyCmd) Run(app *App) error {
+	ctx := context.Background()
+	location := c.Location
+	if !coordPattern.MatchString(location) {
+		result, err := app.client.Geocode(ctx, location)
+		if err != nil {
+			return fmt.Errorf("geocode %q: %w", location, err)
+		}
+		if result.Location == "" {
+			return fmt.Errorf("geocode %q: no coordinates returned", location)
+		}
+		location = result.Location
+	}
 	req := amapclient.NearbySearchRequest{
-		Location: c.Location,
+		Location: location,
 		Keywords: c.Keywords,
 		Radius:   c.Radius,
 		SortRule: c.SortRule,
@@ -142,7 +157,7 @@ func (c *NearbyCmd) Run(app *App) error {
 			MinRating: c.MinRating,
 		},
 	}
-	response, err := app.client.NearbySearch(context.Background(), req)
+	response, err := app.client.NearbySearch(ctx, req)
 	if err != nil {
 		return err
 	}

@@ -56,18 +56,12 @@ func (c *Client) Weather(ctx context.Context, req WeatherRequest) (WeatherRespon
 }
 
 func (c *Client) resolveAdcode(ctx context.Context, address string) (string, error) {
-	params := url.Values{}
-	params.Set("address", address)
-
-	var resp geocodeResponse
-	if err := c.Get(ctx, "/v3/geocode/geo", params, &resp); err != nil {
+	result, err := c.Geocode(ctx, address)
+	if err != nil {
 		return "", err
 	}
-	if resp.Status != "" && resp.Status != "1" {
-		return "", APIError{InfoCode: resp.Infocode, Info: resp.Info}
-	}
-	if len(resp.Geocodes) == 0 || resp.Geocodes[0].Adcode == "" {
+	if result.Adcode == "" {
 		return "", ValidationError{Field: "city", Message: fmt.Sprintf("could not resolve %q to an adcode", address)}
 	}
-	return resp.Geocodes[0].Adcode, nil
+	return result.Adcode, nil
 }

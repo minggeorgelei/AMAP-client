@@ -21,7 +21,7 @@ type GlobalOptions struct {
 }
 
 type NearbyCmd struct {
-	Location  string  `help:"Center point as 'longitude,latitude'." required:""`
+	Location  string  `help:"Center as 'longitude,latitude' or an address/place name (geocoded if not coordinates)." required:""`
 	Keywords  string  `help:"Search keywords."`
 	Radius    int     `help:"Search radius in meters (0-50000)." default:"5000"`
 	SortRule  string  `help:"Sort rule: distance or weight." default:"distance" enum:"distance,weight"`

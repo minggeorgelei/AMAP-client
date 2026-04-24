@@ -108,14 +108,3 @@ type Cast struct {
 	Nightpower   string `json:"nightpower,omitempty"`
 }
 
-type geocodeResponse struct {
-	Status   string    `json:"status,omitempty"`
-	Info     string    `json:"info,omitempty"`
-	Infocode string    `json:"infocode,omitempty"`
-	Geocodes []geocode `json:"geocodes,omitempty"`
-}
-
-type geocode struct {
-	FormattedAddress string `json:"formatted_address,omitempty"`
-	Adcode           string `json:"adcode,omitempty"`
-}

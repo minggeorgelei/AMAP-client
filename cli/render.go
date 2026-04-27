@@ -79,6 +79,40 @@ func renderNearby(color Color, response amapclient.NearbySearchResponse) string 
 	return b.String()
 }
 
+func renderTips(color Color, response amapclient.InputTipsResponse) string {
+	if len(response.Tips) == 0 {
+		return "No tips found.\n"
+	}
+
+	var b strings.Builder
+	for i, tip := range response.Tips {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		b.WriteString(color.Bold(fmt.Sprintf("#%d", i+1)))
+		b.WriteString("\n")
+		if tip.ID != "" {
+			writeField(&b, color, "ID     ", tip.ID)
+		}
+		if tip.Name != "" {
+			writeField(&b, color, "Name   ", color.Cyan(tip.Name))
+		}
+		if tip.District != "" {
+			writeField(&b, color, "Region ", string(tip.District))
+		}
+		if tip.Adcode != "" {
+			writeField(&b, color, "Adcode ", string(tip.Adcode))
+		}
+		if tip.Location != "" {
+			writeField(&b, color, "Coord  ", string(tip.Location))
+		}
+		if tip.Address != "" {
+			writeField(&b, color, "Address", string(tip.Address))
+		}
+	}
+	return b.String()
+}
+
 func renderWeather(color Color, response amapclient.WeatherResponse) string {
 	if len(response.Lives) == 0 && len(response.Forecasts) == 0 {
 		return "No weather data.\n"

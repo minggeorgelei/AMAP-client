@@ -134,20 +134,14 @@ func parseWithExit(parser *kong.Kong, args []string, exitCode *int) (ctx *kong.C
 
 func (c *NearbyCmd) Run(app *App) error {
 	ctx := context.Background()
-	location := c.Location
-	if !coordPattern.MatchString(location) {
-		result, err := app.client.Geocode(ctx, location)
-		if err != nil {
-			return fmt.Errorf("geocode %q: %w", location, err)
-		}
-		if result.Location == "" {
-			return fmt.Errorf("geocode %q: no coordinates returned", location)
-		}
-		location = result.Location
+	location, err := resolveLocation(ctx, app, c.Location)
+	if err != nil {
+		return err
 	}
 	req := amapclient.NearbySearchRequest{
 		Location: location,
 		Keywords: c.Keywords,
+		Types:    c.Types,
 		Radius:   c.Radius,
 		SortRule: c.SortRule,
 		Limit:    c.Limit,
@@ -162,6 +156,42 @@ func (c *NearbyCmd) Run(app *App) error {
 		return err
 	}
 	return app.writePOIs(response)
+}
+
+func (c *TipsCmd) Run(app *App) error {
+	ctx := context.Background()
+	location, err := resolveLocation(ctx, app, c.Location)
+	if err != nil {
+		return err
+	}
+	req := amapclient.InputTipsRequest{
+		Keywords: c.Keywords,
+		Types:    c.Types,
+		Location: location,
+		City:     c.City,
+		DataType: c.DataType,
+	}
+	response, err := app.client.InputTips(ctx, req)
+	if err != nil {
+		return err
+	}
+	return app.writeTips(response)
+}
+
+// resolveLocation accepts either an empty string, a "lng,lat" coordinate pair,
+// or a free-form address/place name. Names are geocoded into coordinates.
+func resolveLocation(ctx context.Context, app *App, loc string) (string, error) {
+	if loc == "" || coordPattern.MatchString(loc) {
+		return loc, nil
+	}
+	result, err := app.client.Geocode(ctx, loc)
+	if err != nil {
+		return "", fmt.Errorf("geocode %q: %w", loc, err)
+	}
+	if result.Location == "" {
+		return "", fmt.Errorf("geocode %q: no coordinates returned", loc)
+	}
+	return result.Location, nil
 }
 
 func (c *SearchCmd) Run(app *App) error {
@@ -205,6 +235,19 @@ func (a *App) writeWeather(response amapclient.WeatherResponse) error {
 		return nil
 	}
 	_, _ = fmt.Fprint(a.out, renderWeather(a.color, response))
+	return nil
+}
+
+func (a *App) writeTips(response amapclient.InputTipsResponse) error {
+	if a.json {
+		encoded, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			return fmt.Errorf("encode json: %w", err)
+		}
+		_, _ = fmt.Fprintln(a.out, string(encoded))
+		return nil
+	}
+	_, _ = fmt.Fprint(a.out, renderTips(a.color, response))
 	return nil
 }
 

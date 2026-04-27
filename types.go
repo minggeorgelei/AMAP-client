@@ -1,7 +1,10 @@
 package amapclient
 
+import "encoding/json"
+
 type NearbySearchRequest struct {
 	Keywords string
+	Types    string
 	Location string
 	Radius   int
 	SortRule string
@@ -108,3 +111,45 @@ type Cast struct {
 	Nightpower   string `json:"nightpower,omitempty"`
 }
 
+type InputTipsRequest struct {
+	Keywords string
+	Types    string
+	Location string
+	City     string
+	DataType string
+}
+
+type InputTipsResponse struct {
+	Status   string `json:"status,omitempty"`
+	Info     string `json:"info,omitempty"`
+	Infocode string `json:"infocode,omitempty"`
+	Count    string `json:"count,omitempty"`
+	Tips     []Tip  `json:"tips"`
+}
+
+type Tip struct {
+	ID       string     `json:"id,omitempty"`
+	Name     string     `json:"name,omitempty"`
+	District FlexString `json:"district,omitempty"`
+	Adcode   FlexString `json:"adcode,omitempty"`
+	Location FlexString `json:"location,omitempty"`
+	Address  FlexString `json:"address,omitempty"`
+}
+
+// FlexString is a string field that tolerates AMAP returning unset values as
+// an empty array ("[]") instead of "" — plain string decoding would fail on
+// those. Triggered in practice by datatype=busline, where address/location
+// come back as []. JSON marshaling falls back to the underlying string.
+type FlexString string
+
+func (s *FlexString) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 || string(data) == "null" || data[0] != '"' {
+		return nil
+	}
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*s = FlexString(v)
+	return nil
+}

@@ -4,10 +4,11 @@ import "time"
 
 // Root defines the CLI command tree.
 type Root struct {
-	Global GlobalOptions `embed:""`
-	Nearby  NearbyCmd  `cmd:"" help:"Search nearby places by location."`
-	Search  SearchCmd  `cmd:"" help:"Search places by keyword or type."`
-	Weather WeatherCmd `cmd:"" help:"Query live or forecast weather by city."`
+	Global  GlobalOptions `embed:""`
+	Nearby  NearbyCmd     `cmd:"" help:"Search nearby places by location."`
+	Search  SearchCmd     `cmd:"" help:"Search places by keyword or type."`
+	Tips    TipsCmd       `cmd:"" help:"Query input suggestion tips by keyword."`
+	Weather WeatherCmd    `cmd:"" help:"Query live or forecast weather by city."`
 }
 
 type GlobalOptions struct {
@@ -23,12 +24,21 @@ type GlobalOptions struct {
 type NearbyCmd struct {
 	Location  string  `help:"Center as 'longitude,latitude' or an address/place name (geocoded if not coordinates)." required:""`
 	Keywords  string  `help:"Search keywords."`
+	Types     string  `help:"POI type codes, pipe-separated."`
 	Radius    int     `help:"Search radius in meters (0-50000)." default:"5000"`
 	SortRule  string  `help:"Sort rule: distance or weight." default:"distance" enum:"distance,weight"`
 	Limit     int     `help:"Number of POIs to return (max 20)."`
 	MinCost   float64 `name:"min-cost" help:"Minimum per-person cost; excludes POIs without cost data."`
 	MaxCost   float64 `name:"max-cost" help:"Maximum per-person cost; excludes POIs without cost data."`
 	MinRating float64 `name:"min-rating" help:"Minimum rating 0-5; excludes POIs without rating data."`
+}
+
+type TipsCmd struct {
+	Keywords string `help:"Search keywords." required:""`
+	Types    string `help:"POI type codes (or names), pipe-separated."`
+	Location string `help:"Bias center as 'longitude,latitude' or an address (geocoded if not coordinates); only takes effect when --city is set."`
+	City     string `help:"City name, citycode, or adcode to bias search."`
+	DataType string `name:"datatype" help:"Data type filter: all, poi, bus, busline (pipe-separated)." default:"all"`
 }
 
 type SearchCmd struct {

@@ -74,6 +74,9 @@ func (c *Client) fetchNearbyPage(ctx context.Context, req NearbySearchRequest, p
 	if req.Keywords != "" {
 		params.Set("keywords", req.Keywords)
 	}
+	if req.Types != "" {
+		params.Set("types", req.Types)
+	}
 	if req.Radius > 0 {
 		params.Set("radius", strconv.Itoa(req.Radius))
 	}

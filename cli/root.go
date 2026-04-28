@@ -4,11 +4,12 @@ import "time"
 
 // Root defines the CLI command tree.
 type Root struct {
-	Global  GlobalOptions `embed:""`
-	Nearby  NearbyCmd     `cmd:"" help:"Search nearby places by location."`
-	Search  SearchCmd     `cmd:"" help:"Search places by keyword or type."`
-	Tips    TipsCmd       `cmd:"" help:"Query input suggestion tips by keyword."`
-	Weather WeatherCmd    `cmd:"" help:"Query live or forecast weather by city."`
+	Global     GlobalOptions `embed:""`
+	Nearby     NearbyCmd     `cmd:"" help:"Search nearby places by location."`
+	Search     SearchCmd     `cmd:"" help:"Search places by keyword or type."`
+	Tips       TipsCmd       `cmd:"" help:"Query input suggestion tips by keyword."`
+	Weather    WeatherCmd    `cmd:"" help:"Query live or forecast weather by city."`
+	Directions DirectionsCmd `cmd:"" help:"Plan a route between origin and destination."`
 }
 
 type GlobalOptions struct {
@@ -54,4 +55,47 @@ type SearchCmd struct {
 type WeatherCmd struct {
 	City       string `help:"City adcode (6 digits) or name; names are resolved via geocoding." required:""`
 	Extensions string `help:"Weather type: base (live) or all (forecast)." default:"base" enum:"base,all"`
+}
+
+type DirectionsCmd struct {
+	Driving     DirectionsDrivingCmd     `cmd:"" help:"Driving route."`
+	Walking     DirectionsWalkingCmd     `cmd:"" help:"Walking route."`
+	Bicycling   DirectionsBicyclingCmd   `cmd:"" help:"Bicycling route."`
+	Electrobike DirectionsElectrobikeCmd `cmd:"" help:"Electric-bike route."`
+	Transit     DirectionsTransitCmd     `cmd:"" help:"Public transit route."`
+}
+
+type DirectionsCommon struct {
+	Origin      string `help:"Origin as 'longitude,latitude' or an address (geocoded if not coordinates)." required:""`
+	Destination string `help:"Destination as 'longitude,latitude' or an address (geocoded if not coordinates)." required:""`
+}
+
+type DirectionsDrivingCmd struct {
+	DirectionsCommon `embed:""`
+	Strategy         string `help:"Routing strategy code (default 32 — high-accuracy recommendation)."`
+	Waypoints        string `help:"Up to 16 waypoints, semicolon-separated 'lng,lat' pairs."`
+	Plate            string `help:"Vehicle plate for restriction-aware routing."`
+}
+
+type DirectionsWalkingCmd struct {
+	DirectionsCommon `embed:""`
+	AlternativeRoute int `name:"alternative-route" help:"Number of alternative routes (1-3)."`
+}
+
+type DirectionsBicyclingCmd struct {
+	DirectionsCommon `embed:""`
+	AlternativeRoute int `name:"alternative-route" help:"Number of alternative routes (1-3)."`
+}
+
+type DirectionsElectrobikeCmd struct {
+	DirectionsCommon `embed:""`
+	AlternativeRoute int `name:"alternative-route" help:"Number of alternative routes (1-3)."`
+}
+
+type DirectionsTransitCmd struct {
+	DirectionsCommon `embed:""`
+	City1            string `name:"city1" help:"Origin city name, citycode, or adcode." required:""`
+	City2            string `name:"city2" help:"Destination city name, citycode, or adcode." required:""`
+	Strategy         string `help:"Transit strategy code 0-8 (default 0 — recommended)."`
+	AlternativeRoute int    `name:"alternative-route" help:"Number of alternative routes (1-10, default 5)."`
 }

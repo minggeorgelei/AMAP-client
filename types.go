@@ -136,20 +136,30 @@ type Tip struct {
 	Address  FlexString `json:"address,omitempty"`
 }
 
-// FlexString is a string field that tolerates AMAP returning unset values as
-// an empty array ("[]") instead of "" — plain string decoding would fail on
-// those. Triggered in practice by datatype=busline, where address/location
-// come back as []. JSON marshaling falls back to the underlying string.
+// FlexString is a string field that tolerates AMAP shape inconsistencies:
+//   - empty array "[]" instead of "" (e.g. busline tips return address/location
+//     this way),
+//   - bare JSON number (e.g. bicycling/electrobike directions return
+//     step_distance as a number while driving/walking return it as a string).
+//
+// JSON marshaling falls back to the underlying string.
 type FlexString string
 
 func (s *FlexString) UnmarshalJSON(data []byte) error {
-	if len(data) == 0 || string(data) == "null" || data[0] != '"' {
+	if len(data) == 0 || string(data) == "null" {
 		return nil
 	}
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+	if data[0] == '"' {
+		var v string
+		if err := json.Unmarshal(data, &v); err != nil {
+			return err
+		}
+		*s = FlexString(v)
+		return nil
 	}
-	*s = FlexString(v)
+	if c := data[0]; c == '-' || (c >= '0' && c <= '9') {
+		*s = FlexString(data)
+		return nil
+	}
 	return nil
 }

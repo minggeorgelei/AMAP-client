@@ -213,6 +213,119 @@ func (c *SearchCmd) Run(app *App) error {
 	return app.writePOIs(response)
 }
 
+func (c *DirectionsDrivingCmd) Run(app *App) error {
+	ctx := context.Background()
+	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	if err != nil {
+		return err
+	}
+	resp, err := app.client.DirectionsDriving(ctx, amapclient.DrivingRequest{
+		DirectionsRequest: base,
+		Strategy:          c.Strategy,
+		Waypoints:         c.Waypoints,
+		Plate:             c.Plate,
+	})
+	if err != nil {
+		return err
+	}
+	return app.writeDirections(resp)
+}
+
+func (c *DirectionsWalkingCmd) Run(app *App) error {
+	ctx := context.Background()
+	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	if err != nil {
+		return err
+	}
+	resp, err := app.client.DirectionsWalking(ctx, amapclient.WalkingRequest{
+		DirectionsRequest: base,
+		AlternativeRoute:  c.AlternativeRoute,
+	})
+	if err != nil {
+		return err
+	}
+	return app.writeDirections(resp)
+}
+
+func (c *DirectionsBicyclingCmd) Run(app *App) error {
+	ctx := context.Background()
+	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	if err != nil {
+		return err
+	}
+	resp, err := app.client.DirectionsBicycling(ctx, amapclient.BicyclingRequest{
+		DirectionsRequest: base,
+		AlternativeRoute:  c.AlternativeRoute,
+	})
+	if err != nil {
+		return err
+	}
+	return app.writeDirections(resp)
+}
+
+func (c *DirectionsElectrobikeCmd) Run(app *App) error {
+	ctx := context.Background()
+	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	if err != nil {
+		return err
+	}
+	resp, err := app.client.DirectionsElectrobike(ctx, amapclient.ElectrobikeRequest{
+		DirectionsRequest: base,
+		AlternativeRoute:  c.AlternativeRoute,
+	})
+	if err != nil {
+		return err
+	}
+	return app.writeDirections(resp)
+}
+
+func (c *DirectionsTransitCmd) Run(app *App) error {
+	ctx := context.Background()
+	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	if err != nil {
+		return err
+	}
+	resp, err := app.client.DirectionsTransit(ctx, amapclient.TransitRequest{
+		DirectionsRequest: base,
+		City1:             c.City1,
+		City2:             c.City2,
+		Strategy:          c.Strategy,
+		AlternativeRoute:  c.AlternativeRoute,
+	})
+	if err != nil {
+		return err
+	}
+	return app.writeDirections(resp)
+}
+
+func resolveDirectionsCommon(ctx context.Context, app *App, c DirectionsCommon) (amapclient.DirectionsRequest, error) {
+	origin, err := resolveLocation(ctx, app, c.Origin)
+	if err != nil {
+		return amapclient.DirectionsRequest{}, err
+	}
+	destination, err := resolveLocation(ctx, app, c.Destination)
+	if err != nil {
+		return amapclient.DirectionsRequest{}, err
+	}
+	return amapclient.DirectionsRequest{
+		Origin:      origin,
+		Destination: destination,
+	}, nil
+}
+
+func (a *App) writeDirections(response amapclient.DirectionsResponse) error {
+	if a.json {
+		encoded, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			return fmt.Errorf("encode json: %w", err)
+		}
+		_, _ = fmt.Fprintln(a.out, string(encoded))
+		return nil
+	}
+	_, _ = fmt.Fprint(a.out, renderDirections(a.color, response))
+	return nil
+}
+
 func (c *WeatherCmd) Run(app *App) error {
 	req := amapclient.WeatherRequest{
 		City:       c.City,

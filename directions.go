@@ -14,11 +14,11 @@ type DirectionsRequest struct {
 }
 
 // Per-mode show_fields defaults. Driving gets tmcs (live traffic) on top of
-// the common cost+polyline because it's the only mode where road conditions
+// the common cost because it's the only mode where road conditions
 // vary meaningfully along the route.
 const (
-	showFieldsDriving    = "cost,tmcs,polyline"
-	showFieldsDirections = "cost,polyline"
+	showFieldsDriving    = "cost,tmcs"
+	showFieldsDirections = "cost"
 )
 
 type DrivingRequest struct {

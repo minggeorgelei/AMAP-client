@@ -94,8 +94,6 @@ type DirectionsElectrobikeCmd struct {
 
 type DirectionsTransitCmd struct {
 	DirectionsCommon `embed:""`
-	City1            string `name:"city1" help:"Origin city name, citycode, or adcode." required:""`
-	City2            string `name:"city2" help:"Destination city name, citycode, or adcode." required:""`
 	Strategy         string `help:"Transit strategy code 0-8 (default 0 — recommended)."`
 	AlternativeRoute int    `name:"alternative-route" help:"Number of alternative routes (1-10, default 5)."`
 }

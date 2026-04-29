@@ -181,17 +181,29 @@ func (c *TipsCmd) Run(app *App) error {
 // resolveLocation accepts either an empty string, a "lng,lat" coordinate pair,
 // or a free-form address/place name. Names are geocoded into coordinates.
 func resolveLocation(ctx context.Context, app *App, loc string) (string, error) {
-	if loc == "" || coordPattern.MatchString(loc) {
-		return loc, nil
+	location, _, err := resolveLocationDetail(ctx, app, loc)
+	return location, err
+}
+
+// resolveLocationDetail is like resolveLocation but also returns the 6-digit
+// adcode of the geocoded region. Adcode is empty when the input was already
+// coordinates (no geocoding pass) — callers that need an adcode (e.g. transit
+// city1/city2) must handle that case.
+func resolveLocationDetail(ctx context.Context, app *App, loc string) (string, string, error) {
+	if loc == "" {
+		return "", "", nil
+	}
+	if coordPattern.MatchString(loc) {
+		return loc, "", nil
 	}
 	result, err := app.client.Geocode(ctx, loc)
 	if err != nil {
-		return "", fmt.Errorf("geocode %q: %w", loc, err)
+		return "", "", fmt.Errorf("geocode %q: %w", loc, err)
 	}
 	if result.Location == "" {
-		return "", fmt.Errorf("geocode %q: no coordinates returned", loc)
+		return "", "", fmt.Errorf("geocode %q: no coordinates returned", loc)
 	}
-	return result.Location, nil
+	return result.Location, result.Adcode, nil
 }
 
 func (c *SearchCmd) Run(app *App) error {
@@ -281,16 +293,29 @@ func (c *DirectionsElectrobikeCmd) Run(app *App) error {
 
 func (c *DirectionsTransitCmd) Run(app *App) error {
 	ctx := context.Background()
-	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	origin, originAdcode, err := resolveLocationDetail(ctx, app, c.Origin)
 	if err != nil {
 		return err
 	}
+	destination, destAdcode, err := resolveLocationDetail(ctx, app, c.Destination)
+	if err != nil {
+		return err
+	}
+	if originAdcode == "" {
+		return fmt.Errorf("transit requires an address for --origin so the city can be inferred (raw coordinates aren't supported)")
+	}
+	if destAdcode == "" {
+		return fmt.Errorf("transit requires an address for --destination so the city can be inferred (raw coordinates aren't supported)")
+	}
 	resp, err := app.client.DirectionsTransit(ctx, amapclient.TransitRequest{
-		DirectionsRequest: base,
-		City1:             c.City1,
-		City2:             c.City2,
-		Strategy:          c.Strategy,
-		AlternativeRoute:  c.AlternativeRoute,
+		DirectionsRequest: amapclient.DirectionsRequest{
+			Origin:      origin,
+			Destination: destination,
+		},
+		City1:            originAdcode,
+		City2:            destAdcode,
+		Strategy:         c.Strategy,
+		AlternativeRoute: c.AlternativeRoute,
 	})
 	if err != nil {
 		return err

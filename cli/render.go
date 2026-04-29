@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	amapclient "github.com/minggeorgelei/AMAP-client"
@@ -21,7 +22,7 @@ func renderNearby(color Color, response amapclient.NearbySearchResponse) string 
 		b.WriteString(color.Cyan(poi.Name))
 		if poi.Distance != "" {
 			b.WriteString("  ")
-			b.WriteString(color.Dim(fmt.Sprintf("(%sm)", poi.Distance)))
+			b.WriteString(color.Dim("(" + formatDistance(poi.Distance) + ")"))
 		}
 		b.WriteString("\n")
 
@@ -204,17 +205,17 @@ func renderDirections(color Color, response amapclient.DirectionsResponse) strin
 		b.WriteString(color.Bold(fmt.Sprintf("Path #%d", i+1)))
 		b.WriteString("\n")
 		if path.Distance != "" {
-			writeField(&b, color, "Dist   ", path.Distance+"m")
+			writeField(&b, color, "Dist   ", formatDistance(path.Distance))
 		}
 		if path.Cost != nil {
 			if path.Cost.Duration != "" {
-				writeField(&b, color, "Time   ", color.Yellow(path.Cost.Duration+"s"))
+				writeField(&b, color, "Time   ", color.Yellow(formatDuration(path.Cost.Duration)))
 			}
 			if path.Cost.Tolls != "" {
 				writeField(&b, color, "Tolls  ", color.Green("$"+path.Cost.Tolls))
 			}
 			if path.Cost.TollDistance != "" {
-				writeField(&b, color, "TollKm ", path.Cost.TollDistance+"m")
+				writeField(&b, color, "TollKm ", formatDistance(path.Cost.TollDistance))
 			}
 			if path.Cost.TollRoad != "" {
 				writeField(&b, color, "TollRd ", path.Cost.TollRoad)
@@ -237,17 +238,17 @@ func renderDirections(color Color, response amapclient.DirectionsResponse) strin
 		b.WriteString(color.Bold(fmt.Sprintf("Transit #%d", i+1)))
 		b.WriteString("\n")
 		if transit.Distance != "" {
-			writeField(&b, color, "Dist   ", string(transit.Distance)+"m")
+			writeField(&b, color, "Dist   ", formatDistance(string(transit.Distance)))
 		}
 		if transit.WalkingDistance != "" {
-			writeField(&b, color, "Walk   ", string(transit.WalkingDistance)+"m")
+			writeField(&b, color, "Walk   ", formatDistance(string(transit.WalkingDistance)))
 		}
 		if transit.NightFlag == "1" {
 			writeField(&b, color, "Night  ", color.Yellow("yes"))
 		}
 		if transit.Cost != nil {
 			if transit.Cost.Duration != "" {
-				writeField(&b, color, "Time   ", color.Yellow(string(transit.Cost.Duration)+"s"))
+				writeField(&b, color, "Time   ", color.Yellow(formatDuration(string(transit.Cost.Duration))))
 			}
 			if transit.Cost.TransitFee != "" {
 				writeField(&b, color, "Fare   ", color.Green("$"+string(transit.Cost.TransitFee)))
@@ -268,9 +269,9 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 	if seg.Walking != nil && seg.Walking.Distance != "" {
 		b.WriteString(prefix)
 		b.WriteString(color.Dim("walk  "))
-		b.WriteString(string(seg.Walking.Distance) + "m")
+		b.WriteString(formatDistance(string(seg.Walking.Distance)))
 		if seg.Walking.Cost != nil && seg.Walking.Cost.Duration != "" {
-			b.WriteString(color.Dim(" (" + seg.Walking.Cost.Duration + "s)"))
+			b.WriteString(color.Dim(" (" + formatDuration(string(seg.Walking.Cost.Duration)) + ")"))
 		}
 		b.WriteString("\n")
 		prefix = "     "
@@ -281,9 +282,9 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 		b.WriteString(color.Dim("bus   "))
 		b.WriteString(color.Cyan(bl.Name))
 		if bl.Distance != "" {
-			b.WriteString(color.Dim(" (" + string(bl.Distance) + "m"))
+			b.WriteString(color.Dim(" (" + formatDistance(string(bl.Distance))))
 			if bl.Cost != nil && bl.Cost.Duration != "" {
-				b.WriteString(color.Dim(", " + bl.Cost.Duration + "s"))
+				b.WriteString(color.Dim(", " + formatDuration(bl.Cost.Duration)))
 			}
 			b.WriteString(color.Dim(")"))
 		}
@@ -346,7 +347,7 @@ func writeSteps(b *strings.Builder, color Color, steps []amapclient.Step) {
 			meta = append(meta, string(step.StepDistance)+"m")
 		}
 		if step.Cost != nil && step.Cost.Duration != "" {
-			meta = append(meta, step.Cost.Duration+"s")
+			meta = append(meta, formatDuration(step.Cost.Duration))
 		}
 		if len(meta) > 0 {
 			b.WriteString("  ")
@@ -392,4 +393,42 @@ func nonEmpty(values ...string) []string {
 		}
 	}
 	return out
+}
+
+func formatDistance(s string) string {
+	if s == "" {
+		return ""
+	}
+	meters, err := strconv.ParseInt(s, 10, 64)
+	if err != nil || meters < 0 {
+		return s + "m"
+	}
+	if meters < 1000 {
+		return fmt.Sprintf("%dm", meters)
+	}
+	return fmt.Sprintf("%.3fkm", float64(meters)/1000)
+}
+
+func formatDuration(s string) string {
+	if s == "" {
+		return ""
+	}
+	secs, err := strconv.ParseInt(s, 10, 64)
+	if err != nil || secs < 0 {
+		return s + "s"
+	}
+	h := secs / 3600
+	m := (secs % 3600) / 60
+	sec := secs % 60
+	var buf strings.Builder
+	if h > 0 {
+		fmt.Fprintf(&buf, "%dh", h)
+	}
+	if m > 0 {
+		fmt.Fprintf(&buf, "%dm", m)
+	}
+	if sec > 0 {
+		fmt.Fprintf(&buf, "%ds", sec)
+	}
+	return buf.String()
 }

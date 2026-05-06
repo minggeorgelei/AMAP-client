@@ -36,7 +36,7 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 	exitCode := 0
 	parser, err := kong.New(
 		&root,
-		kong.Name("AMAP-client"),
+		kong.Name("amap"),
 		kong.Description("Search and resolve places via the AMAP API."),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{Compact: true, Summary: true}),

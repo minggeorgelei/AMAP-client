@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	amapclient "github.com/minggeorgelei/AMAP-client"
@@ -178,32 +179,23 @@ func (c *TipsCmd) Run(app *App) error {
 	return app.writeTips(response)
 }
 
-// resolveLocation accepts either an empty string, a "lng,lat" coordinate pair,
-// or a free-form address/place name. Names are geocoded into coordinates.
+// resolveLocation accepts an empty string, a "lng,lat" coordinate pair, or a
+// free-form address. Coordinates pass through; addresses are geocoded.
 func resolveLocation(ctx context.Context, app *App, loc string) (string, error) {
-	location, _, err := resolveLocationDetail(ctx, app, loc)
-	return location, err
-}
-
-// resolveLocationDetail is like resolveLocation but also returns the 6-digit
-// adcode of the geocoded region. Adcode is empty when the input was already
-// coordinates (no geocoding pass) — callers that need an adcode (e.g. transit
-// city1/city2) must handle that case.
-func resolveLocationDetail(ctx context.Context, app *App, loc string) (string, string, error) {
 	if loc == "" {
-		return "", "", nil
+		return "", nil
 	}
 	if coordPattern.MatchString(loc) {
-		return loc, "", nil
+		return loc, nil
 	}
 	result, err := app.client.Geocode(ctx, loc)
 	if err != nil {
-		return "", "", fmt.Errorf("geocode %q: %w", loc, err)
+		return "", fmt.Errorf("geocode %q: %w", loc, err)
 	}
 	if result.Location == "" {
-		return "", "", fmt.Errorf("geocode %q: no coordinates returned", loc)
+		return "", fmt.Errorf("geocode %q: no coordinates returned", loc)
 	}
-	return result.Location, result.Adcode, nil
+	return result.Location, nil
 }
 
 func (c *SearchCmd) Run(app *App) error {
@@ -227,15 +219,19 @@ func (c *SearchCmd) Run(app *App) error {
 
 func (c *DirectionsDrivingCmd) Run(app *App) error {
 	ctx := context.Background()
-	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	waypoints := splitWaypoints(c.Waypoints)
+	resolved, err := resolveDirectionsLocations(ctx, app, append([]string{c.Origin, c.Destination}, waypoints...))
 	if err != nil {
 		return err
 	}
 	resp, err := app.client.DirectionsDriving(ctx, amapclient.DrivingRequest{
-		DirectionsRequest: base,
-		Strategy:          c.Strategy,
-		Waypoints:         c.Waypoints,
-		Plate:             c.Plate,
+		DirectionsRequest: amapclient.DirectionsRequest{
+			Origin:      resolved[0].Location,
+			Destination: resolved[1].Location,
+		},
+		Strategy:  c.Strategy,
+		Waypoints: joinWaypointLocations(resolved[2:]),
+		Plate:     c.Plate,
 	})
 	if err != nil {
 		return err
@@ -243,15 +239,45 @@ func (c *DirectionsDrivingCmd) Run(app *App) error {
 	return app.writeDirections(resp)
 }
 
+// splitWaypoints parses the ";"-joined waypoint string into individual entries,
+// dropping blanks so trailing/duplicate separators don't produce empty inputs.
+func splitWaypoints(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ";")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
+func joinWaypointLocations(results []amapclient.GeocodeResult) string {
+	if len(results) == 0 {
+		return ""
+	}
+	parts := make([]string, len(results))
+	for i, r := range results {
+		parts[i] = r.Location
+	}
+	return strings.Join(parts, ";")
+}
+
 func (c *DirectionsWalkingCmd) Run(app *App) error {
 	ctx := context.Background()
-	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	resolved, err := resolveDirectionsLocations(ctx, app, []string{c.Origin, c.Destination})
 	if err != nil {
 		return err
 	}
 	resp, err := app.client.DirectionsWalking(ctx, amapclient.WalkingRequest{
-		DirectionsRequest: base,
-		AlternativeRoute:  c.AlternativeRoute,
+		DirectionsRequest: amapclient.DirectionsRequest{
+			Origin:      resolved[0].Location,
+			Destination: resolved[1].Location,
+		},
+		AlternativeRoute: c.AlternativeRoute,
 	})
 	if err != nil {
 		return err
@@ -261,13 +287,16 @@ func (c *DirectionsWalkingCmd) Run(app *App) error {
 
 func (c *DirectionsBicyclingCmd) Run(app *App) error {
 	ctx := context.Background()
-	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	resolved, err := resolveDirectionsLocations(ctx, app, []string{c.Origin, c.Destination})
 	if err != nil {
 		return err
 	}
 	resp, err := app.client.DirectionsBicycling(ctx, amapclient.BicyclingRequest{
-		DirectionsRequest: base,
-		AlternativeRoute:  c.AlternativeRoute,
+		DirectionsRequest: amapclient.DirectionsRequest{
+			Origin:      resolved[0].Location,
+			Destination: resolved[1].Location,
+		},
+		AlternativeRoute: c.AlternativeRoute,
 	})
 	if err != nil {
 		return err
@@ -277,13 +306,16 @@ func (c *DirectionsBicyclingCmd) Run(app *App) error {
 
 func (c *DirectionsElectrobikeCmd) Run(app *App) error {
 	ctx := context.Background()
-	base, err := resolveDirectionsCommon(ctx, app, c.DirectionsCommon)
+	resolved, err := resolveDirectionsLocations(ctx, app, []string{c.Origin, c.Destination})
 	if err != nil {
 		return err
 	}
 	resp, err := app.client.DirectionsElectrobike(ctx, amapclient.ElectrobikeRequest{
-		DirectionsRequest: base,
-		AlternativeRoute:  c.AlternativeRoute,
+		DirectionsRequest: amapclient.DirectionsRequest{
+			Origin:      resolved[0].Location,
+			Destination: resolved[1].Location,
+		},
+		AlternativeRoute: c.AlternativeRoute,
 	})
 	if err != nil {
 		return err
@@ -293,27 +325,23 @@ func (c *DirectionsElectrobikeCmd) Run(app *App) error {
 
 func (c *DirectionsTransitCmd) Run(app *App) error {
 	ctx := context.Background()
-	origin, originAdcode, err := resolveLocationDetail(ctx, app, c.Origin)
+	resolved, err := resolveDirectionsLocations(ctx, app, []string{c.Origin, c.Destination})
 	if err != nil {
 		return err
 	}
-	destination, destAdcode, err := resolveLocationDetail(ctx, app, c.Destination)
-	if err != nil {
-		return err
-	}
-	if originAdcode == "" {
+	if resolved[0].Adcode == "" {
 		return fmt.Errorf("transit requires an address for --origin so the city can be inferred (raw coordinates aren't supported)")
 	}
-	if destAdcode == "" {
+	if resolved[1].Adcode == "" {
 		return fmt.Errorf("transit requires an address for --destination so the city can be inferred (raw coordinates aren't supported)")
 	}
 	resp, err := app.client.DirectionsTransit(ctx, amapclient.TransitRequest{
 		DirectionsRequest: amapclient.DirectionsRequest{
-			Origin:      origin,
-			Destination: destination,
+			Origin:      resolved[0].Location,
+			Destination: resolved[1].Location,
 		},
-		City1:            originAdcode,
-		City2:            destAdcode,
+		City1:            resolved[0].Adcode,
+		City2:            resolved[1].Adcode,
 		Strategy:         c.Strategy,
 		AlternativeRoute: c.AlternativeRoute,
 	})
@@ -323,19 +351,46 @@ func (c *DirectionsTransitCmd) Run(app *App) error {
 	return app.writeDirections(resp)
 }
 
-func resolveDirectionsCommon(ctx context.Context, app *App, c DirectionsCommon) (amapclient.DirectionsRequest, error) {
-	origin, err := resolveLocation(ctx, app, c.Origin)
-	if err != nil {
-		return amapclient.DirectionsRequest{}, err
+// resolveDirectionsLocations resolves every entry in raws to a coordinate,
+// batching all address inputs into a single GeocodeBatch call. Coordinate
+// inputs pass through with an empty Adcode (callers that need adcode must
+// handle that case). Output preserves input order and length.
+func resolveDirectionsLocations(ctx context.Context, app *App, raws []string) ([]amapclient.GeocodeResult, error) {
+	results := make([]amapclient.GeocodeResult, len(raws))
+	var addrs []string
+	var addrIdx []int
+	for i, r := range raws {
+		trimmed := strings.TrimSpace(r)
+		if trimmed == "" {
+			continue
+		}
+		if coordPattern.MatchString(trimmed) {
+			results[i] = amapclient.GeocodeResult{Location: trimmed}
+			continue
+		}
+		addrs = append(addrs, trimmed)
+		addrIdx = append(addrIdx, i)
 	}
-	destination, err := resolveLocation(ctx, app, c.Destination)
-	if err != nil {
-		return amapclient.DirectionsRequest{}, err
+	if len(addrs) == 0 {
+		return results, nil
 	}
-	return amapclient.DirectionsRequest{
-		Origin:      origin,
-		Destination: destination,
-	}, nil
+	if len(addrs) > amapclient.GeocodeBatchLimit {
+		return nil, fmt.Errorf("too many addresses to geocode (%d); AMAP batch limit is %d", len(addrs), amapclient.GeocodeBatchLimit)
+	}
+	geocoded, err := app.client.GeocodeBatch(ctx, addrs)
+	if err != nil {
+		return nil, fmt.Errorf("geocode batch: %w", err)
+	}
+	if len(geocoded) != len(addrs) {
+		return nil, fmt.Errorf("geocode batch returned %d results for %d addresses", len(geocoded), len(addrs))
+	}
+	for j, g := range geocoded {
+		if g.Location == "" {
+			return nil, fmt.Errorf("geocode %q: no coordinates returned", addrs[j])
+		}
+		results[addrIdx[j]] = g
+	}
+	return results, nil
 }
 
 func (a *App) writeDirections(response amapclient.DirectionsResponse) error {

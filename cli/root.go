@@ -73,7 +73,7 @@ type DirectionsCommon struct {
 type DirectionsDrivingCmd struct {
 	DirectionsCommon `embed:""`
 	Strategy         string `help:"Routing strategy code (default 32 — high-accuracy recommendation)."`
-	Waypoints        string `help:"Up to 16 waypoints, semicolon-separated 'lng,lat' pairs."`
+	Waypoints        string `help:"Up to 16 waypoints, semicolon-separated; each is 'lng,lat' or an address (geocoded if not coordinates)."`
 	Plate            string `help:"Vehicle plate for restriction-aware routing."`
 }
 

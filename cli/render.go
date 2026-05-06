@@ -268,7 +268,7 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 	prefix := fmt.Sprintf("  %d. ", index)
 	if seg.Walking != nil && seg.Walking.Distance != "" {
 		b.WriteString(prefix)
-		b.WriteString(color.Dim("walk  "))
+		b.WriteString(color.Dim("walk   "))
 		b.WriteString(formatDistance(string(seg.Walking.Distance)))
 		if seg.Walking.Cost != nil && seg.Walking.Cost.Duration != "" {
 			b.WriteString(color.Dim(" (" + formatDuration(string(seg.Walking.Cost.Duration)) + ")"))
@@ -279,7 +279,7 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 	if seg.Bus != nil && len(seg.Bus.Buslines) > 0 {
 		bl := seg.Bus.Buslines[0]
 		b.WriteString(prefix)
-		b.WriteString(color.Dim("bus   "))
+		b.WriteString(color.Dim(buslineLabel(bl.Name)))
 		b.WriteString(color.Cyan(bl.Name))
 		if bl.Distance != "" {
 			b.WriteString(color.Dim(" (" + formatDistance(string(bl.Distance))))
@@ -324,6 +324,13 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 		}
 		b.WriteString("\n")
 	}
+}
+
+func buslineLabel(transitType string) string {
+	if strings.Contains(transitType, "地铁") {
+		return "metro  "
+	}
+	return "bus    "
 }
 
 func writeSteps(b *strings.Builder, color Color, steps []amapclient.Step) {

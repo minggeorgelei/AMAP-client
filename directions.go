@@ -136,6 +136,7 @@ type TransitSegment struct {
 type TransitWalking struct {
 	Distance FlexString `json:"distance,omitempty"`
 	Cost     *StepCost  `json:"cost,omitempty"`
+	Steps    []Step     `json:"steps,omitempty"`
 }
 
 // TransitBus carries one or more candidate bus lines for the same leg — the

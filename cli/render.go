@@ -274,6 +274,7 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 			b.WriteString(color.Dim(" (" + formatDuration(string(seg.Walking.Cost.Duration)) + ")"))
 		}
 		b.WriteString("\n")
+		writeStepList(b, color, seg.Walking.Steps, "        ")
 		prefix = "     "
 	}
 	if seg.Bus != nil && len(seg.Bus.Buslines) > 0 {
@@ -356,9 +357,13 @@ func writeSteps(b *strings.Builder, color Color, steps []amapclient.Step) {
 	b.WriteString("  ")
 	b.WriteString(color.Dim("Steps  :"))
 	b.WriteString("\n")
+	writeStepList(b, color, steps, "    ")
+}
+
+func writeStepList(b *strings.Builder, color Color, steps []amapclient.Step, indent string) {
 	width := len(strconv.Itoa(len(steps)))
 	for i, step := range steps {
-		b.WriteString("    ")
+		b.WriteString(indent)
 		b.WriteString(color.Dim(fmt.Sprintf("%*d.", width, i+1)))
 		b.WriteString(" ")
 		if step.Instruction != "" {

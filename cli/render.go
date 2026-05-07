@@ -326,6 +326,22 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 	}
 }
 
+// highlightNavi bolds occurrences of the navi action / assistant_action inside
+// the instruction text, so the imperative verb stands out at a glance.
+func highlightNavi(color Color, instruction string, navi *amapclient.StepNavi) string {
+	if navi == nil {
+		return instruction
+	}
+	out := instruction
+	for _, term := range []string{navi.Action, navi.AssistantAction} {
+		if term == "" {
+			continue
+		}
+		out = strings.ReplaceAll(out, term, color.Bold(term))
+	}
+	return out
+}
+
 func buslineLabel(transitType string) string {
 	if strings.Contains(transitType, "地铁") {
 		return "metro  "
@@ -340,12 +356,13 @@ func writeSteps(b *strings.Builder, color Color, steps []amapclient.Step) {
 	b.WriteString("  ")
 	b.WriteString(color.Dim("Steps  :"))
 	b.WriteString("\n")
+	width := len(strconv.Itoa(len(steps)))
 	for i, step := range steps {
 		b.WriteString("    ")
-		b.WriteString(color.Dim(fmt.Sprintf("%d.", i+1)))
+		b.WriteString(color.Dim(fmt.Sprintf("%*d.", width, i+1)))
 		b.WriteString(" ")
 		if step.Instruction != "" {
-			b.WriteString(step.Instruction)
+			b.WriteString(highlightNavi(color, step.Instruction, step.Navi))
 		} else if step.RoadName != "" {
 			b.WriteString(step.RoadName)
 		}

@@ -17,8 +17,8 @@ type DirectionsRequest struct {
 // the common cost because it's the only mode where road conditions
 // vary meaningfully along the route.
 const (
-	showFieldsDriving    = "cost,tmcs"
-	showFieldsDirections = "cost"
+	showFieldsDriving    = "cost,tmcs,navi"
+	showFieldsDirections = "cost,navi"
 )
 
 type DrivingRequest struct {
@@ -96,7 +96,13 @@ type Step struct {
 	RoadName     string     `json:"road_name,omitempty"`
 	StepDistance FlexString `json:"step_distance,omitempty"`
 	Cost         *StepCost  `json:"cost,omitempty"`
+	Navi         *StepNavi  `json:"navi,omitempty"`
 	Polyline     string     `json:"polyline,omitempty"`
+}
+
+type StepNavi struct {
+	Action          string `json:"action,omitempty"`
+	AssistantAction string `json:"assistant_action,omitempty"`
 }
 
 type StepCost struct {

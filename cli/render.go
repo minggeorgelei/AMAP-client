@@ -93,10 +93,10 @@ func renderTips(color Color, response amapclient.InputTipsResponse) string {
 		b.WriteString(color.Bold(fmt.Sprintf("#%d", i+1)))
 		b.WriteString("\n")
 		if tip.ID != "" {
-			writeField(&b, color, "ID     ", tip.ID)
+			writeField(&b, color, "ID     ", string(tip.ID))
 		}
 		if tip.Name != "" {
-			writeField(&b, color, "Name   ", color.Cyan(tip.Name))
+			writeField(&b, color, "Name   ", color.Cyan(string(tip.Name)))
 		}
 		if tip.District != "" {
 			writeField(&b, color, "Region ", string(tip.District))
@@ -311,7 +311,7 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 		b.WriteString(color.Dim("rail  "))
 		b.WriteString(color.Cyan(seg.Railway.Name))
 		if seg.Railway.Distance != "" {
-			b.WriteString(color.Dim(" (" + string(seg.Railway.Distance) + "m)"))
+			b.WriteString(color.Dim(" (" + formatDistance(string(seg.Railway.Distance)) + ")"))
 		}
 		b.WriteString("\n")
 		prefix = "     "
@@ -319,7 +319,7 @@ func writeTransitSegment(b *strings.Builder, color Color, index int, seg amapcli
 	if seg.Taxi != nil && seg.Taxi.Distance != "" {
 		b.WriteString(prefix)
 		b.WriteString(color.Dim("taxi  "))
-		b.WriteString(string(seg.Taxi.Distance) + "m")
+		b.WriteString(formatDistance(string(seg.Taxi.Distance)))
 		if seg.Taxi.Price != "" {
 			b.WriteString("  " + color.Green("$"+string(seg.Taxi.Price)))
 		}
@@ -373,7 +373,7 @@ func writeStepList(b *strings.Builder, color Color, steps []amapclient.Step, ind
 		}
 		var meta []string
 		if step.StepDistance != "" {
-			meta = append(meta, string(step.StepDistance)+"m")
+			meta = append(meta, formatDistance(string(step.StepDistance)))
 		}
 		if step.Cost != nil && step.Cost.Duration != "" {
 			meta = append(meta, formatDuration(step.Cost.Duration))

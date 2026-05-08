@@ -128,8 +128,8 @@ type InputTipsResponse struct {
 }
 
 type Tip struct {
-	ID       string     `json:"id,omitempty"`
-	Name     string     `json:"name,omitempty"`
+	ID       FlexString `json:"id,omitempty"`
+	Name     FlexString `json:"name,omitempty"`
 	District FlexString `json:"district,omitempty"`
 	Adcode   FlexString `json:"adcode,omitempty"`
 	Location FlexString `json:"location,omitempty"`

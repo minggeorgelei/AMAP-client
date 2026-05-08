@@ -13,13 +13,14 @@ type Root struct {
 }
 
 type GlobalOptions struct {
-	Key     string        `help:"AMAP API key." env:"AMAP_API_KEY"`
-	BaseUrl string        `help:"AMAP API base URL." env:"AMAP_BASE_URL" default:"https://restapi.amap.com"`
-	Timeout time.Duration `help:"HTTP timeout." default:"10s"`
-	JSON    bool          `help:"Output JSON."`
-	NoColor bool          `help:"Disable color output."`
-	Verbose bool          `help:"Verbose logging."`
-	Version VersionFlag   `name:"version" help:"Print version and exit."`
+	Key      string        `help:"AMAP API key." env:"AMAP_API_KEY"`
+	BaseUrl  string        `help:"AMAP API base URL." env:"AMAP_BASE_URL" default:"https://restapi.amap.com"`
+	Language string        `help:"AMAP response language (zh_cn or en)." env:"AMAP_LANGUAGE"`
+	Timeout  time.Duration `help:"HTTP timeout." default:"10s"`
+	JSON     bool          `help:"Output JSON."`
+	NoColor  bool          `help:"Disable color output."`
+	Verbose  bool          `help:"Verbose logging."`
+	Version  VersionFlag   `name:"version" help:"Print version and exit."`
 }
 
 type NearbyCmd struct {

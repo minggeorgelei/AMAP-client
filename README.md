@@ -18,20 +18,20 @@ Library:
 go get github.com/minggeorgelei/AMAP-client@latest
 ```
 
-You'll need an [AMAP API key](https://console.amap.com/dev/key/app). Set it via `AMAP_API_KEY` (preferred) or pass `--key` on every call.
+You'll need an [AMAP API key](https://console.amap.com/dev/key/app). Set it via `AMAP_API_KEY` (preferred) or pass `--key` on every call. To request a response language, set `AMAP_LANGUAGE` or pass `--language` (supported values: `zh_cn`, `en`); when unset no language parameter is sent and AMAP returns its default (Chinese).
 
 ## CLI
 
 ```sh
 export AMAP_API_KEY=your-key-here
 
-amap nearby     --location="121.473667,31.230525" --keywords=咖啡 --radius=1000
+amap nearby     --location="121.4906,31.2397" --keywords=咖啡 --radius=1000
 amap search     --keywords=博物馆 --region=上海
 amap tips       --keywords=人民广场 --city=上海
 amap weather    --city=上海 --extensions=all
-amap directions driving --origin="虹口区花园路168弄" --destination="兴业太古汇" --waypoints="静安大悦城;上海火车站"
-amap directions transit --origin="虹口区花园路168弄" --destination="兴业太古汇"
-amap directions walking --origin="121.473,31.230" --destination="121.448,31.226"
+amap directions driving --origin="虹桥火车站" --destination="外滩" --waypoints="静安寺;人民广场"
+amap directions transit --origin="虹桥火车站" --destination="外滩"
+amap directions walking --origin="121.4906,31.2397" --destination="121.4869,31.2358"
 ```
 
 Origin, destination, `--location`, and waypoints all accept either `lng,lat` coordinates or a free-form address — addresses are geocoded automatically (in a single batched call when there are several, to avoid AMAP's per-second concurrency limit).
@@ -53,7 +53,10 @@ import (
 )
 
 func main() {
-    client := amap.NewClient(amap.Options{Key: os.Getenv("AMAP_API_KEY")})
+    client := amap.NewClient(amap.Options{
+        Key:      os.Getenv("AMAP_API_KEY"),
+        Language: "en",
+    })
 
     resp, err := client.DirectionsDriving(context.Background(), amap.DrivingRequest{
         DirectionsRequest: amap.DirectionsRequest{

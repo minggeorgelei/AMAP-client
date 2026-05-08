@@ -14,6 +14,7 @@ import (
 type Client struct {
 	Key        string
 	BaseUrl    string
+	Language   string
 	HttpClient *http.Client
 }
 
@@ -27,6 +28,7 @@ const (
 type Options struct {
 	Key        string
 	BaseUrl    string
+	Language   string
 	Timeout    time.Duration
 	HttpClient *http.Client
 }
@@ -44,6 +46,7 @@ func NewClient(opts Options) *Client {
 	return &Client{
 		Key:        opts.Key,
 		BaseUrl:    opts.BaseUrl,
+		Language:   opts.Language,
 		HttpClient: opts.HttpClient,
 	}
 }
@@ -74,6 +77,10 @@ func (c *Client) Request(ctx context.Context, method, path string, params url.Va
 	}
 	if c.Key != "" && params.Get("key") == "" {
 		params.Set("key", c.Key)
+	}
+
+	if c.Language != "" && params.Get("language") == "" {
+		params.Set("language", c.Language)
 	}
 
 	endpoint := strings.TrimRight(c.baseUrl(), "/") + "/" + strings.TrimLeft(path, "/")

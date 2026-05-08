@@ -71,9 +71,10 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 	}
 
 	client := amapclient.NewClient(amapclient.Options{
-		Key:     root.Global.Key,
-		BaseUrl: root.Global.BaseUrl,
-		Timeout: root.Global.Timeout,
+		Key:      root.Global.Key,
+		BaseUrl:  root.Global.BaseUrl,
+		Language: root.Global.Language,
+		Timeout:  root.Global.Timeout,
 	})
 
 	app := &App{
